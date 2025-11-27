@@ -513,7 +513,7 @@ export default function Profile() {
 
       <section id="contact" className="container reveal" ref={addToRefs}>
         <SectionTitle title="05. CONTACT" />
-        <p className="contact-message">I'm currently available for freelance work and new projects. <br/> Let's build something amazing together.</p>
+        <p className="contact-message"><br/> Let's build something amazing together.</p>
         <a href="mailto:omdev009mishra@gmail.com" className="btn btn-large">Say Hello!</a>
         <div className="social-links">
           <a href="https://github.com/omdev009mishra" target="_blank" rel="noreferrer"><i className="fa-brands fa-github"></i></a>

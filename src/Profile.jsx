@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import './profile.css'
 import profileImg from './assets/profile.jpg'
@@ -6,6 +6,146 @@ import simpleNotesImg from './assets/simplenotes.png'
 import emailImg from './assets/email.jpg'
 import funkymanImg from './assets/funkyman.png'
 import dinoImg from './assets/dinogame.avif'
+
+// --- Game State Management ---
+const ACHIEVEMENTS = [
+  { id: 'first-visit', name: 'Welcome Explorer!', desc: 'Started your journey', icon: '🎮', condition: 'auto' },
+  { id: 'about-reader', name: 'Story Reader', desc: 'Read the About section', icon: '📖', condition: 'scroll-about' },
+  { id: 'skill-master', name: 'Skill Scout', desc: 'Explored all skills', icon: '⚔️', condition: 'view-skills' },
+  { id: 'project-viewer', name: 'Code Explorer', desc: 'Viewed projects', icon: '🚀', condition: 'scroll-projects' },
+  { id: 'click-master', name: 'Click Champion', desc: 'Made 50 clicks', icon: '🖱️', condition: 'clicks-50' },
+  { id: 'power-collector', name: 'Power Collector', desc: 'Collected 5 power-ups', icon: '⭐', condition: 'powerups-5' },
+  { id: 'konami-code', name: 'Classic Gamer', desc: 'Entered the Konami code', icon: '🎯', condition: 'konami' },
+  { id: 'completionist', name: 'Completionist', desc: 'Reached the end', icon: '🏆', condition: 'scroll-contact' },
+]
+
+// --- Game HUD Component ---
+function GameHUD({ score, level, xp, maxXp, achievements, quests, combo }) {
+  const [showAchievements, setShowAchievements] = useState(false)
+  const [showQuests, setShowQuests] = useState(false)
+  
+  const xpPercentage = (xp / maxXp) * 100
+
+  return (
+    <div className="game-hud">
+      <div className="hud-top">
+        <div className="hud-stats">
+          <div className="stat-item">
+            <span className="stat-label">LVL</span>
+            <span className="stat-value">{level}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">SCORE</span>
+            <span className="stat-value">{score}</span>
+          </div>
+          {combo > 1 && (
+            <div className="stat-item combo-display">
+              <span className="stat-label">COMBO</span>
+              <span className="stat-value combo-value">{combo}x</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="xp-bar-container" title={`${xp}/${maxXp} XP`}>
+          <div className="xp-bar" style={{ width: `${xpPercentage}%` }}></div>
+          <span className="xp-text">{xp}/{maxXp} XP</span>
+        </div>
+
+        <div className="hud-buttons">
+          <button className="hud-btn" onClick={() => setShowQuests(!showQuests)} title="Quests">
+            📜 {quests.filter(q => !q.completed).length}
+          </button>
+          <button className="hud-btn" onClick={() => setShowAchievements(!showAchievements)} title="Achievements">
+            🏆 {achievements.filter(a => a.unlocked).length}/{achievements.length}
+          </button>
+        </div>
+      </div>
+
+      {showQuests && (
+        <div className="hud-panel quests-panel">
+          <h3>Active Quests</h3>
+          {quests.map((quest, i) => (
+            <div key={i} className={`quest-item ${quest.completed ? 'completed' : ''}`}>
+              <span>{quest.completed ? '✅' : '⏳'}</span>
+              <span>{quest.name}</span>
+              <span className="quest-reward">+{quest.xp} XP</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showAchievements && (
+        <div className="hud-panel achievements-panel">
+          <h3>Achievements</h3>
+          <div className="achievement-grid">
+            {achievements.map((ach, i) => (
+              <div key={i} className={`achievement-item ${ach.unlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
+                <div className="ach-icon">{ach.unlocked ? ach.icon : '🔒'}</div>
+                <div className="ach-name">{ach.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// --- Achievement Notification Component ---
+function AchievementNotification({ achievement, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000)
+    return () => clearTimeout(timer)
+  }, [onClose])
+
+  return (
+    <div className="achievement-notification">
+      <div className="achievement-popup">
+        <div className="ach-header">🎉 Achievement Unlocked!</div>
+        <div className="ach-content">
+          <div className="ach-icon-large">{achievement.icon}</div>
+          <div>
+            <div className="ach-title">{achievement.name}</div>
+            <div className="ach-desc">{achievement.desc}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- Floating Power-Up Component ---
+function PowerUp({ x, y, type, onCollect }) {
+  const icons = {
+    star: '⭐',
+    gem: '💎',
+    coin: '🪙',
+    heart: '❤️',
+    bolt: '⚡'
+  }
+
+  return (
+    <div 
+      className="power-up" 
+      style={{ left: `${x}%`, top: `${y}%` }}
+      onClick={onCollect}
+    >
+      <div className="power-up-icon">{icons[type]}</div>
+    </div>
+  )
+}
+
+// --- Click Particle Effect Component ---
+function ClickParticle({ x, y, id, text = "+10" }) {
+  return (
+    <div 
+      className="click-particle" 
+      style={{ left: x, top: y }}
+    >
+      {text}
+    </div>
+  )
+}
 
 // --- Custom Cursor Component ---
 function CustomCursor() {
@@ -61,7 +201,7 @@ function CustomCursor() {
 }
 
 // --- 3D Tilt Card Component ---
-function TiltCard({ children, className = "" }) {
+function TiltCard({ children, className = "", onDoubleClick }) {
   const cardRef = useRef(null)
 
   const handleMouseMove = (e) => {
@@ -86,12 +226,23 @@ function TiltCard({ children, className = "" }) {
     cardRef.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`
   }
 
+  const handleDoubleClickEvent = () => {
+    if (cardRef.current) {
+      cardRef.current.classList.add('card-explode')
+      setTimeout(() => {
+        cardRef.current?.classList.remove('card-explode')
+      }, 600)
+    }
+    if (onDoubleClick) onDoubleClick()
+  }
+
   return (
     <div 
       ref={cardRef} 
       className={`tilt-card ${className}`} 
       onMouseMove={handleMouseMove} 
       onMouseLeave={handleMouseLeave}
+      onDoubleClick={handleDoubleClickEvent}
       style={{ transition: 'transform 0.1s ease-out' }}
     >
       {children}
@@ -288,6 +439,227 @@ function ExperienceCard({ role, company, type, date, location, description, skil
 export default function Profile() {
   const taglineRef = useRef(null)
   const revealRefs = useRef([])
+  const konamiCode = useRef([])
+  const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']
+
+  // Game State
+  const [gameState, setGameState] = useState({
+    score: 0,
+    level: 1,
+    xp: 0,
+    maxXp: 100,
+    clicks: 0,
+    powerupsCollected: 0,
+    skillDoubleClicks: 0,
+    achievements: ACHIEVEMENTS.map(a => ({ ...a, unlocked: false })),
+    quests: [
+      { name: 'Read About Me', completed: false, xp: 50 },
+      { name: 'View All Skills', completed: false, xp: 75 },
+      { name: 'Check Out Projects', completed: false, xp: 100 },
+      { name: 'Collect 5 Power-ups', completed: false, xp: 150 },
+      { name: 'Reach Contact Section', completed: false, xp: 200 },
+    ],
+    sectionsVisited: new Set(),
+  })
+
+  const [recentAchievement, setRecentAchievement] = useState(null)
+  const [clickParticles, setClickParticles] = useState([])
+  const [powerUps, setPowerUps] = useState([])
+  const [skillLevels, setSkillLevels] = useState({})
+  const [combo, setCombo] = useState(0)
+  const [lastClickTime, setLastClickTime] = useState(0)
+  const comboTimeout = useRef(null)
+
+  // Unlock achievement
+  const unlockAchievement = useCallback((achievementId) => {
+    setGameState(prev => {
+      const achievement = prev.achievements.find(a => a.id === achievementId)
+      if (!achievement || achievement.unlocked) return prev
+
+      setRecentAchievement(achievement)
+      
+      return {
+        ...prev,
+        achievements: prev.achievements.map(a => 
+          a.id === achievementId ? { ...a, unlocked: true } : a
+        ),
+        score: prev.score + 100,
+        xp: prev.xp + 50,
+      }
+    })
+  }, [])
+
+  // Add XP and handle level up
+  const addXP = useCallback((amount) => {
+    setGameState(prev => {
+      let newXP = prev.xp + amount
+      let newLevel = prev.level
+      let newMaxXP = prev.maxXp
+
+      while (newXP >= newMaxXP) {
+        newXP -= newMaxXP
+        newLevel++
+        newMaxXP = Math.floor(newMaxXP * 1.5)
+      }
+
+      return {
+        ...prev,
+        xp: newXP,
+        level: newLevel,
+        maxXp: newMaxXP,
+        score: prev.score + (newLevel > prev.level ? 500 : 0),
+      }
+    })
+  }, [])
+
+  // Handle skill card double click
+  const handleSkillDoubleClick = useCallback((skillName) => {
+    setSkillLevels(prev => ({
+      ...prev,
+      [skillName]: (prev[skillName] || 1) + 1
+    }))
+    setGameState(prev => ({ 
+      ...prev, 
+      skillDoubleClicks: prev.skillDoubleClicks + 1,
+      score: prev.score + 25 
+    }))
+    addXP(15)
+  }, [addXP])
+
+  // Complete quest
+  const completeQuest = useCallback((questName) => {
+    setGameState(prev => {
+      const quest = prev.quests.find(q => q.name === questName)
+      if (!quest || quest.completed) return prev
+
+      addXP(quest.xp)
+
+      return {
+        ...prev,
+        quests: prev.quests.map(q => 
+          q.name === questName ? { ...q, completed: true } : q
+        ),
+      }
+    })
+  }, [addXP])
+
+  // Track clicks with combo system
+  const handleGlobalClick = useCallback((e) => {
+    const now = Date.now()
+    const timeDiff = now - lastClickTime
+    
+    // If clicked within 1 second, increase combo
+    let newCombo = combo
+    if (timeDiff < 1000) {
+      newCombo = combo + 1
+    } else {
+      newCombo = 1
+    }
+    
+    setCombo(newCombo)
+    setLastClickTime(now)
+    
+    // Clear existing timeout
+    if (comboTimeout.current) {
+      clearTimeout(comboTimeout.current)
+    }
+    
+    // Reset combo after 1.5 seconds of no clicks
+    comboTimeout.current = setTimeout(() => {
+      setCombo(0)
+    }, 1500)
+    
+    const basePoints = 10
+    const comboBonus = newCombo > 1 ? (newCombo - 1) * 5 : 0
+    const totalPoints = basePoints + comboBonus
+    
+    setGameState(prev => ({ 
+      ...prev, 
+      clicks: prev.clicks + 1, 
+      score: prev.score + totalPoints 
+    }))
+    
+    // Add click particle with combo text
+    const id = Date.now()
+    const text = newCombo > 1 ? `+${totalPoints} (x${newCombo})` : `+${totalPoints}`
+    setClickParticles(prev => [...prev, { id, x: e.clientX, y: e.clientY, text }])
+    setTimeout(() => {
+      setClickParticles(prev => prev.filter(p => p.id !== id))
+    }, 1000)
+
+    addXP(5 + comboBonus)
+  }, [addXP, combo, lastClickTime])
+
+  // Power-up collection
+  const collectPowerUp = useCallback((id) => {
+    setPowerUps(prev => prev.filter(p => p.id !== id))
+    setGameState(prev => ({ 
+      ...prev, 
+      powerupsCollected: prev.powerupsCollected + 1,
+      score: prev.score + 50 
+    }))
+    addXP(25)
+  }, [addXP])
+
+  // Generate random power-ups
+  useEffect(() => {
+    const generatePowerUp = () => {
+      const types = ['star', 'gem', 'coin', 'heart', 'bolt']
+      const newPowerUp = {
+        id: Date.now(),
+        x: Math.random() * 80 + 10,
+        y: Math.random() * 60 + 20,
+        type: types[Math.floor(Math.random() * types.length)]
+      }
+      setPowerUps(prev => [...prev, newPowerUp])
+    }
+
+    const interval = setInterval(generatePowerUp, 8000)
+    generatePowerUp() // Initial power-up
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  // Konami code detection
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      konamiCode.current.push(e.key)
+      if (konamiCode.current.length > konamiSequence.length) {
+        konamiCode.current.shift()
+      }
+      
+      if (konamiCode.current.join(',') === konamiSequence.join(',')) {
+        unlockAchievement('konami-code')
+        document.body.style.animation = 'rainbow 2s infinite'
+        setTimeout(() => {
+          document.body.style.animation = ''
+        }, 5000)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [unlockAchievement])
+
+  // Track achievements based on game state
+  useEffect(() => {
+    if (gameState.clicks >= 50) unlockAchievement('click-master')
+    if (gameState.powerupsCollected >= 5) {
+      unlockAchievement('power-collector')
+      completeQuest('Collect 5 Power-ups')
+    }
+  }, [gameState.clicks, gameState.powerupsCollected, unlockAchievement, completeQuest])
+
+  // Auto-unlock first achievement
+  useEffect(() => {
+    setTimeout(() => unlockAchievement('first-visit'), 1000)
+  }, [unlockAchievement])
+
+  // Add global click listener
+  useEffect(() => {
+    document.addEventListener('click', handleGlobalClick)
+    return () => document.removeEventListener('click', handleGlobalClick)
+  }, [handleGlobalClick])
 
   // Spotlight effect handler
   const handleSpotlightMove = (e) => {
@@ -356,6 +728,34 @@ export default function Profile() {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible')
+          
+          // Track section visits and unlock achievements
+          const sectionId = entry.target.id
+          if (sectionId) {
+            setGameState(prev => {
+              const newVisited = new Set(prev.sectionsVisited)
+              newVisited.add(sectionId)
+              return { ...prev, sectionsVisited: newVisited }
+            })
+
+            // Unlock achievements and complete quests based on sections
+            if (sectionId === 'about') {
+              unlockAchievement('about-reader')
+              completeQuest('Read About Me')
+            }
+            if (sectionId === 'skills') {
+              unlockAchievement('skill-master')
+              completeQuest('View All Skills')
+            }
+            if (sectionId === 'projects') {
+              unlockAchievement('project-viewer')
+              completeQuest('Check Out Projects')
+            }
+            if (sectionId === 'contact') {
+              unlockAchievement('completionist')
+              completeQuest('Reach Contact Section')
+            }
+          }
         }
       })
     }, { threshold: 0.1 })
@@ -365,7 +765,7 @@ export default function Profile() {
     })
 
     return () => observer.disconnect()
-  }, [])
+  }, [unlockAchievement, completeQuest])
 
   const addToRefs = (el) => {
     if (el && !revealRefs.current.includes(el)) {
@@ -376,6 +776,37 @@ export default function Profile() {
   return (
     <main>
       <CustomCursor />
+      <GameHUD 
+        score={gameState.score}
+        level={gameState.level}
+        xp={gameState.xp}
+        maxXp={gameState.maxXp}
+        achievements={gameState.achievements}
+        quests={gameState.quests}
+        combo={combo}
+      />
+      
+      {recentAchievement && (
+        <AchievementNotification 
+          achievement={recentAchievement}
+          onClose={() => setRecentAchievement(null)}
+        />
+      )}
+
+      {clickParticles.map(particle => (
+        <ClickParticle key={particle.id} x={particle.x} y={particle.y} id={particle.id} text={particle.text} />
+      ))}
+
+      {powerUps.map(powerUp => (
+        <PowerUp 
+          key={powerUp.id}
+          x={powerUp.x}
+          y={powerUp.y}
+          type={powerUp.type}
+          onCollect={() => collectPowerUp(powerUp.id)}
+        />
+      ))}
+
       <header className="hero">
         <div className="hero-content">
           <div className="pixel-avatar"></div>
@@ -405,30 +836,39 @@ export default function Profile() {
 
       <section id="skills" className="container reveal" ref={addToRefs}>
         <SectionTitle title="02. SKILLS" />
+        <p className="game-hint">💡 Double-click skills to level them up!</p>
         
         <h3 className="skill-category-title">Programming & Web</h3>
         <div className="skills-grid">
-          <TiltCard className="skill-card"><i className="fa-brands fa-java"></i><span>Java</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-solid fa-code"></i><span>C / C++</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-brands fa-html5"></i><span>HTML5</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-brands fa-css3-alt"></i><span>CSS3</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-brands fa-js"></i><span>JavaScript</span></TiltCard>
+          {['Java', 'C / C++', 'HTML5', 'CSS3', 'JavaScript'].map((skill, i) => (
+            <TiltCard key={skill} className="skill-card" onDoubleClick={() => handleSkillDoubleClick(skill)}>
+              <i className={['fa-brands fa-java', 'fa-solid fa-code', 'fa-brands fa-html5', 'fa-brands fa-css3-alt', 'fa-brands fa-js'][i]}></i>
+              <span>{skill}</span>
+              {skillLevels[skill] > 1 && <span className="skill-level">Lv. {skillLevels[skill]}</span>}
+            </TiltCard>
+          ))}
         </div>
 
         <h3 className="skill-category-title">Game Dev & Creative</h3>
         <div className="skills-grid">
-          <TiltCard className="skill-card"><i className="fa-brands fa-unreal"></i><span>Unreal Engine 5</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-solid fa-cube"></i><span>Blender</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-solid fa-wand-magic-sparkles"></i><span>After Effects</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-solid fa-film"></i><span>DaVinci Resolve</span></TiltCard>
+          {['Unreal Engine 5', 'Blender', 'After Effects', 'DaVinci Resolve'].map((skill, i) => (
+            <TiltCard key={skill} className="skill-card" onDoubleClick={() => handleSkillDoubleClick(skill)}>
+              <i className={['fa-brands fa-unreal', 'fa-solid fa-cube', 'fa-solid fa-wand-magic-sparkles', 'fa-solid fa-film'][i]}></i>
+              <span>{skill}</span>
+              {skillLevels[skill] > 1 && <span className="skill-level">Lv. {skillLevels[skill]}</span>}
+            </TiltCard>
+          ))}
         </div>
 
         <h3 className="skill-category-title">Tools & Databases</h3>
         <div className="skills-grid">
-          <TiltCard className="skill-card"><i className="fa-brands fa-git-alt"></i><span>Git</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-brands fa-github"></i><span>GitHub</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-solid fa-database"></i><span>MongoDB</span></TiltCard>
-          <TiltCard className="skill-card"><i className="fa-solid fa-server"></i><span>MySQL</span></TiltCard>
+          {['Git', 'GitHub', 'MongoDB', 'MySQL'].map((skill, i) => (
+            <TiltCard key={skill} className="skill-card" onDoubleClick={() => handleSkillDoubleClick(skill)}>
+              <i className={['fa-brands fa-git-alt', 'fa-brands fa-github', 'fa-solid fa-database', 'fa-solid fa-server'][i]}></i>
+              <span>{skill}</span>
+              {skillLevels[skill] > 1 && <span className="skill-level">Lv. {skillLevels[skill]}</span>}
+            </TiltCard>
+          ))}
         </div>
       </section>
 

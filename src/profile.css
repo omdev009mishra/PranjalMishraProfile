@@ -8,6 +8,365 @@
     --border-color: #e0e0e0;
     --font-heading: 'Press Start 2P', cursive;
     --font-body: 'Poppins', sans-serif;
+    --hud-bg: rgba(26, 26, 26, 0.95);
+    --gold: #ffd700;
+    --green: #00ff00;
+}
+
+/* --- Game HUD Styles --- */
+.game-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    background: var(--hud-bg);
+    border-bottom: 4px solid var(--accent-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    padding: 0.8rem 1.5rem;
+}
+
+.hud-top {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    justify-content: space-between;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hud-stats {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.stat-label {
+    font-family: var(--font-heading);
+    font-size: 0.6rem;
+    color: var(--accent-color);
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.combo-display {
+    animation: comboAppear 0.3s ease;
+}
+
+.combo-value {
+    color: var(--green);
+    animation: comboPulse 0.5s ease infinite;
+}
+
+@keyframes comboAppear {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes comboPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.xp-bar-container {
+    flex: 1;
+    max-width: 400px;
+    height: 30px;
+    background: rgba(0,0,0,0.5);
+    border: 3px solid var(--accent-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.xp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color), var(--gold));
+    transition: width 0.5s ease;
+    box-shadow: 0 0 20px var(--accent-color);
+}
+
+.xp-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    color: #fff;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+    pointer-events: none;
+}
+
+.hud-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.hud-btn {
+    background: var(--accent-color);
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+}
+
+.hud-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.4);
+}
+
+.hud-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+}
+
+.hud-panel {
+    position: absolute;
+    top: 100%;
+    right: 1.5rem;
+    background: var(--hud-bg);
+    border: 4px solid var(--accent-color);
+    padding: 1.5rem;
+    margin-top: 0.5rem;
+    min-width: 300px;
+    max-width: 400px;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hud-panel h3 {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    text-align: center;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 0.5rem;
+}
+
+.quest-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    margin-bottom: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 0.85rem;
+}
+
+.quest-item.completed {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.quest-reward {
+    margin-left: auto;
+    color: var(--gold);
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+}
+
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.achievement-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.achievement-item.unlocked {
+    border-color: var(--gold);
+    background: rgba(255,215,0,0.1);
+}
+
+.achievement-item.locked {
+    opacity: 0.4;
+    filter: grayscale(100%);
+}
+
+.ach-icon {
+    font-size: 2rem;
+}
+
+.ach-name {
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    color: #fff;
+}
+
+/* --- Achievement Notification --- */
+.achievement-notification {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 10000;
+    animation: achievementSlide 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes achievementSlide {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.achievement-popup {
+    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+    border: 4px solid var(--gold);
+    padding: 1.5rem;
+    min-width: 300px;
+    box-shadow: 0 10px 40px rgba(255,215,0,0.5), 0 0 20px var(--gold);
+}
+
+.ach-header {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.ach-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ach-icon-large {
+    font-size: 3rem;
+    animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.ach-title {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    color: #fff;
+    margin-bottom: 0.3rem;
+}
+
+.ach-desc {
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+/* --- Power-Ups --- */
+.power-up {
+    position: fixed;
+    z-index: 9000;
+    cursor: pointer;
+    animation: powerFloat 3s ease-in-out infinite, powerGlow 2s ease-in-out infinite;
+}
+
+.power-up-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(255,215,0,0.8));
+    transition: transform 0.2s;
+}
+
+.power-up:hover .power-up-icon {
+    transform: scale(1.3) rotate(20deg);
+}
+
+@keyframes powerFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+@keyframes powerGlow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(255,215,0,0.8)); }
+    50% { filter: drop-shadow(0 0 20px rgba(255,215,0,1)); }
+}
+
+/* --- Click Particles --- */
+.click-particle {
+    position: fixed;
+    z-index: 9999;
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+    pointer-events: none;
+    animation: particleRise 1s ease-out forwards;
+}
+
+@keyframes particleRise {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50px) scale(1.5);
+    }
+}
+
+/* --- Rainbow Effect (Konami Code) --- */
+@keyframes rainbow {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
 }
 
 * {
@@ -30,6 +389,7 @@ body {
     background-size: 40px 40px;
     background-attachment: fixed; /* Keeps grid fixed while scrolling */
     cursor: none; /* Hide default cursor */
+    padding-top: 80px; /* Account for HUD */
 }
 
 .container {
@@ -85,6 +445,23 @@ body {
 }
 
 /* --- General Section Styling --- */
+.game-hint {
+    text-align: center;
+    color: var(--accent-color);
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    margin-bottom: 2rem;
+    padding: 0.8rem;
+    background: rgba(255, 99, 71, 0.1);
+    border: 2px dashed var(--accent-color);
+    animation: hintPulse 2s infinite;
+}
+
+@keyframes hintPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
 .section-title {
     font-family: var(--font-heading);
     color: var(--heading-color);
@@ -301,6 +678,7 @@ body {
     gap: 1rem;
     box-shadow: 6px 6px 0px rgba(0,0,0,0.1);
     cursor: default;
+    position: relative;
 }
 
 .skill-card:hover {
@@ -312,6 +690,38 @@ body {
     color: var(--accent-color);
     font-size: 2rem;
     margin-bottom: 0.5rem;
+}
+
+.skill-level {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--gold);
+    color: #000;
+    font-family: var(--font-heading);
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    border: 2px solid var(--heading-color);
+    animation: levelPop 0.3s ease;
+}
+
+@keyframes levelPop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.card-explode {
+    animation: cardExplode 0.6s ease !important;
+}
+
+@keyframes cardExplode {
+    0% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.2) rotate(5deg); }
+    50% { transform: scale(1.3) rotate(-5deg); }
+    75% { transform: scale(1.2) rotate(3deg); }
+    100% { transform: scale(1) rotate(0deg); }
 }
 
 /* --- Projects Section --- */
@@ -812,5 +1222,63 @@ body.hovering .cursor-outline {
     }
     .experience-item::before {
         left: 4px;
+    }
+
+    /* Game HUD Mobile */
+    .game-hud {
+        padding: 0.5rem 0.8rem;
+    }
+    
+    .hud-top {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .stat-label {
+        font-size: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 0.9rem;
+    }
+    
+    .xp-bar-container {
+        max-width: 100%;
+        width: 100%;
+        order: 3;
+        flex-basis: 100%;
+        height: 25px;
+    }
+    
+    .xp-text {
+        font-size: 0.6rem;
+    }
+    
+    .hud-btn {
+        font-size: 0.6rem;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .hud-panel {
+        right: 0.8rem;
+        min-width: 250px;
+    }
+    
+    .achievement-notification {
+        right: 10px;
+        top: 90px;
+    }
+    
+    .achievement-popup {
+        min-width: 250px;
+        padding: 1rem;
+    }
+    
+    .ach-header {
+        font-size: 0.65rem;
+    }
+    
+    .ach-icon-large {
+        font-size: 2rem;
     }
 }

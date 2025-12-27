@@ -20,71 +20,94 @@ const ACHIEVEMENTS = [
 ]
 
 // --- Game HUD Component ---
-function GameHUD({ score, level, xp, maxXp, achievements, quests, combo }) {
+function GameHUD({ score, level, xp, maxXp, achievements, quests, combo, visible }) {
   const [showAchievements, setShowAchievements] = useState(false)
   const [showQuests, setShowQuests] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   
   const xpPercentage = (xp / maxXp) * 100
 
-  return (
-    <div className="game-hud">
-      <div className="hud-top">
-        <div className="hud-stats">
-          <div className="stat-item">
-            <span className="stat-label">LVL</span>
-            <span className="stat-value">{level}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">SCORE</span>
-            <span className="stat-value">{score}</span>
-          </div>
-          {combo > 1 && (
-            <div className="stat-item combo-display">
-              <span className="stat-label">COMBO</span>
-              <span className="stat-value combo-value">{combo}x</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="xp-bar-container" title={`${xp}/${maxXp} XP`}>
-          <div className="xp-bar" style={{ width: `${xpPercentage}%` }}></div>
-          <span className="xp-text">{xp}/{maxXp} XP</span>
-        </div>
+  if (!visible) return null
 
-        <div className="hud-buttons">
-          <button className="hud-btn" onClick={() => setShowQuests(!showQuests)} title="Quests">
-            📜 {quests.filter(q => !q.completed).length}
-          </button>
-          <button className="hud-btn" onClick={() => setShowAchievements(!showAchievements)} title="Achievements">
-            🏆 {achievements.filter(a => a.unlocked).length}/{achievements.length}
-          </button>
+  return (
+    <div className={`game-hud-circular ${isExpanded ? 'expanded' : 'collapsed'}`}>
+      {/* Main Circular Orb */}
+      <div className="hud-orb" onClick={() => setIsExpanded(!isExpanded)}>
+        <div className="orb-content">
+          <div className="orb-level">{level}</div>
+          <div className="orb-score">{score}</div>
+          <div className="orb-xp-ring" style={{ background: `conic-gradient(var(--gold) 0deg ${(xpPercentage / 100) * 360}deg, rgba(255,215,0,0.2) ${(xpPercentage / 100) * 360}deg)` }}></div>
         </div>
       </div>
 
-      {showQuests && (
-        <div className="hud-panel quests-panel">
-          <h3>Active Quests</h3>
-          {quests.map((quest, i) => (
-            <div key={i} className={`quest-item ${quest.completed ? 'completed' : ''}`}>
-              <span>{quest.completed ? '✅' : '⏳'}</span>
-              <span>{quest.name}</span>
-              <span className="quest-reward">+{quest.xp} XP</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {showAchievements && (
-        <div className="hud-panel achievements-panel">
-          <h3>Achievements</h3>
-          <div className="achievement-grid">
-            {achievements.map((ach, i) => (
-              <div key={i} className={`achievement-item ${ach.unlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
-                <div className="ach-icon">{ach.unlocked ? ach.icon : '🔒'}</div>
-                <div className="ach-name">{ach.name}</div>
-              </div>
-            ))}
+      {/* Expanded Panel */}
+      {isExpanded && (
+        <div className="hud-expanded-panel">
+          <div className="panel-header">
+            <h3>GAME STATUS</h3>
+            <button className="close-btn" onClick={() => setIsExpanded(false)}>✕</button>
           </div>
+
+          <div className="panel-stats">
+            <div className="stat-row">
+              <span>LEVEL</span>
+              <span className="value">{level}</span>
+            </div>
+            <div className="stat-row">
+              <span>SCORE</span>
+              <span className="value">{score}</span>
+            </div>
+            <div className="stat-row">
+              <span>XP</span>
+              <span className="value">{xp}/{maxXp}</span>
+            </div>
+            {combo > 1 && (
+              <div className="stat-row combo">
+                <span>COMBO</span>
+                <span className="value combo-val">{combo}x</span>
+              </div>
+            )}
+          </div>
+
+          <div className="xp-bar-full">
+            <div className="xp-fill" style={{ width: `${xpPercentage}%` }}></div>
+            <span className="xp-label">{Math.round(xpPercentage)}%</span>
+          </div>
+
+          <div className="panel-buttons">
+            <button className="panel-btn quests-btn" onClick={() => setShowQuests(!showQuests)}>
+              📜 QUESTS ({quests.filter(q => !q.completed).length})
+            </button>
+            <button className="panel-btn achievements-btn" onClick={() => setShowAchievements(!showAchievements)}>
+              🏆 ACHIEVEMENTS ({achievements.filter(a => a.unlocked).length}/{achievements.length})
+            </button>
+          </div>
+
+          {showQuests && (
+            <div className="panel-content quests-list">
+              <h4>Active Quests</h4>
+              {quests.map((quest, i) => (
+                <div key={i} className={`quest-item ${quest.completed ? 'completed' : ''}`}>
+                  <span>{quest.completed ? '✅' : '⏳'}</span>
+                  <span className="quest-name">{quest.name}</span>
+                  <span className="quest-xp">+{quest.xp}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showAchievements && (
+            <div className="panel-content achievements-list">
+              <h4>Achievements</h4>
+              <div className="achievement-grid-small">
+                {achievements.map((ach, i) => (
+                  <div key={i} className={`ach-badge ${ach.unlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
+                    {ach.unlocked ? ach.icon : '🔒'}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -475,6 +498,7 @@ export default function Profile() {
   const [titleClicks, setTitleClicks] = useState(0)
   const profileClickTimeout = useRef(null)
   const titleClickTimeout = useRef(null)
+  const [showHUD, setShowHUD] = useState(false)
 
   // Unlock achievement
   const unlockAchievement = useCallback((achievementId) => {
@@ -742,6 +766,21 @@ export default function Profile() {
     return () => document.removeEventListener('click', handleGlobalClick)
   }, [handleGlobalClick])
 
+  // Scroll listener to show HUD after scrolling down
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show circular HUD after scrolling down 300px
+      if (window.scrollY > 300) {
+        setShowHUD(true)
+      } else {
+        setShowHUD(false)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // Spotlight effect handler
   const handleSpotlightMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -857,6 +896,46 @@ export default function Profile() {
   return (
     <main>
       <CustomCursor />
+      
+      {/* Bar HUD - Top (shows when scrollY < 300) */}
+      {!showHUD && (
+        <div className="game-hud">
+          <div className="hud-top">
+            <div className="hud-stats">
+              <div className="stat-item">
+                <span className="stat-label">LVL</span>
+                <span className="stat-value">{gameState.level}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">SCORE</span>
+                <span className="stat-value">{gameState.score}</span>
+              </div>
+              {combo > 1 && (
+                <div className="stat-item combo-display">
+                  <span className="stat-label">COMBO</span>
+                  <span className="stat-value combo-value">{combo}x</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="xp-bar-container" title={`${gameState.xp}/${gameState.maxXp} XP`}>
+              <div className="xp-bar" style={{ width: `${(gameState.xp / gameState.maxXp) * 100}%` }}></div>
+              <span className="xp-text">{gameState.xp}/{gameState.maxXp} XP</span>
+            </div>
+
+            <div className="hud-buttons">
+              <button className="hud-btn" title="Quests">
+                📜 {gameState.quests.filter(q => !q.completed).length}
+              </button>
+              <button className="hud-btn" title="Achievements">
+                🏆 {gameState.achievements.filter(a => a.unlocked).length}/{gameState.achievements.length}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Circular HUD - Bottom Left (shows when scrollY > 300) */}
       <GameHUD 
         score={gameState.score}
         level={gameState.level}
@@ -865,6 +944,7 @@ export default function Profile() {
         achievements={gameState.achievements}
         quests={gameState.quests}
         combo={combo}
+        visible={showHUD}
       />
       
       {recentAchievement && (

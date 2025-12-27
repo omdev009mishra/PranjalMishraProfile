@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import './profile.css'
-import profileImg from './assets/profile.jpg'
+import profileImg from './assets/IMG_20251012_000809_983.webp'
 import simpleNotesImg from './assets/simplenotes.png'
 import emailImg from './assets/email.jpg'
 import funkymanImg from './assets/funkyman.png'

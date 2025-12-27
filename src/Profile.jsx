@@ -115,22 +115,24 @@ function AchievementNotification({ achievement, onClose }) {
 }
 
 // --- Floating Power-Up Component ---
-function PowerUp({ x, y, type, onCollect }) {
+function PowerUp({ x, y, type, onCollect, cursed }) {
   const icons = {
     star: '⭐',
     gem: '💎',
     coin: '🪙',
     heart: '❤️',
-    bolt: '⚡'
+    bolt: '⚡',
+    cursed: '💀'
   }
 
   return (
     <div 
-      className="power-up" 
+      className={`power-up ${cursed ? 'cursed-powerup' : ''}`} 
       style={{ left: `${x}%`, top: `${y}%` }}
       onClick={onCollect}
+      title={cursed ? 'Cursed! Lose XP!' : 'Collect me!'}
     >
-      <div className="power-up-icon">{icons[type]}</div>
+      <div className="power-up-icon">{icons[type] || icons.cursed}</div>
     </div>
   )
 }
@@ -469,6 +471,10 @@ export default function Profile() {
   const [combo, setCombo] = useState(0)
   const [lastClickTime, setLastClickTime] = useState(0)
   const comboTimeout = useRef(null)
+  const [profileClicks, setProfileClicks] = useState(0)
+  const [titleClicks, setTitleClicks] = useState(0)
+  const profileClickTimeout = useRef(null)
+  const titleClickTimeout = useRef(null)
 
   // Unlock achievement
   const unlockAchievement = useCallback((achievementId) => {
@@ -591,25 +597,100 @@ export default function Profile() {
   }, [addXP, combo, lastClickTime])
 
   // Power-up collection
-  const collectPowerUp = useCallback((id) => {
+  const collectPowerUp = useCallback((id, cursed = false) => {
     setPowerUps(prev => prev.filter(p => p.id !== id))
-    setGameState(prev => ({ 
-      ...prev, 
-      powerupsCollected: prev.powerupsCollected + 1,
-      score: prev.score + 50 
-    }))
-    addXP(25)
+    
+    if (cursed) {
+      // Cursed power-up - drains XP!
+      setGameState(prev => ({ 
+        ...prev, 
+        powerupsCollected: prev.powerupsCollected + 1,
+        score: Math.max(0, prev.score - 75),
+        xp: Math.max(0, prev.xp - 40)
+      }))
+      setRecentAchievement({
+        name: '☠️ Cursed!',
+        desc: 'You collected a cursed power-up and lost XP!',
+        icon: '💀',
+        unlocked: true
+      })
+    } else {
+      // Normal power-up
+      setGameState(prev => ({ 
+        ...prev, 
+        powerupsCollected: prev.powerupsCollected + 1,
+        score: prev.score + 50 
+      }))
+      addXP(25)
+    }
   }, [addXP])
+
+  // Easter egg: Spam click profile image
+  const handleProfileImageClick = useCallback(() => {
+    setProfileClicks(prev => prev + 1)
+    
+    if (profileClickTimeout.current) clearTimeout(profileClickTimeout.current)
+    
+    if (profileClicks + 1 >= 10) {
+      // Oops easter egg - XP penalty
+      setGameState(prev => ({
+        ...prev,
+        score: Math.max(0, prev.score - 100),
+        xp: Math.max(0, prev.xp - 25)
+      }))
+      setRecentAchievement({
+        name: '💥 Oops!',
+        desc: 'You clicked too hard and broke the profile pic!',
+        icon: '😱',
+        unlocked: true
+      })
+      setProfileClicks(0)
+    } else {
+      profileClickTimeout.current = setTimeout(() => {
+        setProfileClicks(0)
+      }, 2000)
+    }
+  }, [profileClicks])
+
+  // Easter egg: Spam click title
+  const handleTitleClick = useCallback(() => {
+    setTitleClicks(prev => prev + 1)
+    
+    if (titleClickTimeout.current) clearTimeout(titleClickTimeout.current)
+    
+    if (titleClicks + 1 >= 7) {
+      // Glitch penalty - lose XP
+      setGameState(prev => ({
+        ...prev,
+        score: Math.max(0, prev.score - 150),
+        xp: Math.max(0, prev.xp - 50),
+        level: Math.max(1, prev.level - 1)
+      }))
+      setRecentAchievement({
+        name: '⚠️ Glitch!',
+        desc: 'Too many glitches! XP drained by the system error.',
+        icon: '🔴',
+        unlocked: true
+      })
+      setTitleClicks(0)
+    } else {
+      titleClickTimeout.current = setTimeout(() => {
+        setTitleClicks(0)
+      }, 3000)
+    }
+  }, [titleClicks])
 
   // Generate random power-ups
   useEffect(() => {
     const generatePowerUp = () => {
       const types = ['star', 'gem', 'coin', 'heart', 'bolt']
+      const isCursed = Math.random() < 0.15 // 15% chance for cursed power-up
       const newPowerUp = {
         id: Date.now(),
         x: Math.random() * 80 + 10,
         y: Math.random() * 60 + 20,
-        type: types[Math.floor(Math.random() * types.length)]
+        type: isCursed ? 'cursed' : types[Math.floor(Math.random() * types.length)],
+        cursed: isCursed
       }
       setPowerUps(prev => [...prev, newPowerUp])
     }
@@ -803,7 +884,8 @@ export default function Profile() {
           x={powerUp.x}
           y={powerUp.y}
           type={powerUp.type}
-          onCollect={() => collectPowerUp(powerUp.id)}
+          cursed={powerUp.cursed}
+          onCollect={() => collectPowerUp(powerUp.id, powerUp.cursed)}
         />
       ))}
 
@@ -811,7 +893,7 @@ export default function Profile() {
         <div className="hero-content">
           <div className="pixel-avatar"></div>
           <div className="glitch-wrapper">
-            <h1 className="name glitch" data-text="Pranjal Mishra">Pranjal Mishra</h1>
+            <h1 className="name glitch" data-text="Pranjal Mishra" onClick={handleTitleClick} style={{ cursor: 'pointer' }}>Pranjal Mishra</h1>
           </div>
           <p className="tagline" ref={taglineRef}>Crafting worlds, one pixel at a time.</p>
         </div>
@@ -820,11 +902,12 @@ export default function Profile() {
       <section id="about" className="container reveal" ref={addToRefs}>
         <SectionTitle title="01. ABOUT ME" />
         <div className="about-content" onMouseMove={handleSpotlightMove}>
-          <TiltCard className="profile-tilt">
+          <TiltCard className="profile-tilt" onClick={handleProfileImageClick}>
             <img 
               src={profileImg} 
               alt="Pranjal Mishra" 
               className="profile-pic"
+              style={{ cursor: 'pointer' }}
             />
             <PixelParticles />
           </TiltCard>

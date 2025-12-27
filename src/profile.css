@@ -340,6 +340,29 @@
     50% { filter: drop-shadow(0 0 20px rgba(255,215,0,1)); }
 }
 
+.cursed-powerup {
+    animation: cursedFloat 3s ease-in-out infinite, cursedGlow 1.5s ease-in-out infinite !important;
+}
+
+@keyframes cursedFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+@keyframes cursedGlow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(255,0,0,0.8)); }
+    50% { filter: drop-shadow(0 0 20px rgba(255,0,0,1)); }
+}
+
+.cursed-powerup:hover .power-up-icon {
+    animation: cursedPulse 0.3s ease infinite;
+}
+
+@keyframes cursedPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+}
+
 /* --- Click Particles --- */
 .click-particle {
     position: fixed;

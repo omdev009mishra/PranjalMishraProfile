@@ -1,0 +1,8 @@
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; background: var(--forest-black); }
+body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--soft-light); background: var(--forest-black); }
+body, button, a { font-family: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--neon-cyan); outline-offset: 4px; }
+::selection { color: var(--forest-black); background: var(--bio-green); }

@@ -1,0 +1,6 @@
+/* Zone heights are aligned with the scroll progress ranges in data/zones.ts. */
+#awakening { min-height: 91.5svh; }
+#living-network { min-height: 122svh; }
+#experimentation { min-height: 183svh; }
+#technology-core { min-height: 104svh; }
+#exit-portal { min-height: 110svh; }

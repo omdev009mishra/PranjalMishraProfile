@@ -3,6 +3,7 @@ import { WorldCanvas } from './world/WorldCanvas'
 import { WorldHUD } from './components/WorldHUD'
 import { WORLD_ZONES } from './data/zones'
 import './styles/world.css'
+import './styles/zones.css'
 
 function App() {
   useScrollProgress()
